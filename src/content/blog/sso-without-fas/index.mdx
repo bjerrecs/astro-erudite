@@ -1,0 +1,71 @@
+---
+title: 'SSO Without FAS'
+description: 'Enable full SSO to Entra only joined session hosts'
+date: 2025-06-01
+tags: ['v0.1.0', 'Citrix FAS', 'EntraID']
+image: './ssonofas.png'
+authors: ['sbjerre']
+---
+
+This is a dummy post written in the year 2024! Here is a long blog post with heavily nested headers, which can be used to test the table of contents:
+
+## Prerequisites
+* Windows Server 2022 Domain Controller
+* Entra connect sync
+* Entra ID P1 or P2 (or Microsoft 365 E3/E5)
+* Device must be Entra joined or hybrid joined
+
+## Demo 
+
+## How-to
+
+### Cloud Kerberos trust
+[Microsoft Docs](https://learn.microsoft.com/en-us/windows/security/identity-protection/hello-for-business/deploy/hybrid-cloud-kerberos-trust?tabs=intune)
+
+#### Deploy Microsoft Entra Kerberos
+``New-AzureADKerberosServer -DomainName "yourdomain.local"``
+
+This command does:
+* Creates a special computer account in AD: AZUREADSSOACC
+* Configures the necessary Kerberos keys and permissions
+
+
+#### Configure Windows Hello for Business policy settings
+For Windows Hello for Business:
+* Use Group Policy or Intune to enable Cloud Kerberos Trust.
+
+* Enable the setting:
+``Use cloud trust for on-premises authentication``
+
+#### Enroll in Windows Hello for Business
+
+If you're using Intune (Microsoft Endpoint Manager):
+
+Go to https://intune.microsoft.com
+
+Navigate to:
+Devices > Windows > Configuration profiles
+
+Create a new profile:
+
+Platform: Windows 10 and later
+
+Profile type: Identity protection
+
+Configure:
+
+Configure Windows Hello for Business: Enable
+
+Choose options like:
+
+Use biometrics: Yes/No
+
+PIN complexity
+
+Use cloud trust (recommended)
+
+Assign the profile to target users/devices
+
+✅ Tip: Enable “Cloud Trust” under "Use a certificate for on-premises authentication" = No
+
+### Endpoint configuration

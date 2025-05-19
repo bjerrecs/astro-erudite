@@ -1,0 +1,20 @@
+---
+title: 'Citrix FAS: Soft match on UPN'
+description: 'Enableing FAS to match Cloud identity to a shadow account'
+date: 2024-09-25
+tags: ['v1.0.0', 'Citrix FAS', 'EntraID']
+image: './softmatch.png'
+authors: ['sbjerre']
+---
+
+## Intro
+I had a customer senario where the the users where authenticated from another Entra teant/Forest and needed to match their identity to a shadow account
+
+Start by following the standard configuration of SAML2.0 in Citrix Cloud by Citrix
+The only requirement is that objcectGUID is synced
+
+When you get to the Attributes & Claims, delete the SID part
+![dsa](src\content\blog\citrix-fas-upn-match\fassoft1.png)
+
+Depending on if you want to match SID or UPN delete the other from the Citrix Cloud SAML 2.0 Configuration
+![dsa](src\content\blog\citrix-fas-upn-match\fassoft2.png)
