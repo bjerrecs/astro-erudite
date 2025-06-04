@@ -1,0 +1,128 @@
+---
+title: 'Image Management'
+description: 'How we move away from Microsoft MDT and started useing Packer'
+date: 2025-06-18
+tags: ['Citrix', 'Conference', 'EntraID']
+image: './packer.png'
+authors: ['sbjerre']
+draft: true
+---
+
+## Table of Contents
+- [Introduction](#introduction)
+- [Packer Template](#packer-template)
+
+## Prerequisites
+- A Azure subscription with the necessary permissions to create resources.
+- Packer installed on your local machine or a build server.
+- Basic knowledge of Azure.
+- Familiarity with PowerShell scripting.
+
+
+## Service Principal
+We need to setup a Service Principal in Azure to allow Packer to authenticate and create resources in our Azure subscription. This is done using the Azure CLI. The Service Principal will have the necessary permissions to create and manage resources in the specified resource group.
+But for this example it will have Contributor permissions on the entire subscription. 
+
+**This is not recommended for production environments**, but it simplifies the example. In a production environment, you should limit the scope of the Service Principal to only the necessary resources.
+```
+az login
+az ad sp create-for-rbac --role Contributor --scopes /subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee
+```
+It will generate the following Output
+```
+{
+  "appId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "displayName": "azure-cli-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "password": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "tenant": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+}
+```
+Remember the password (Client Secret) & appId as it will not be shown again.
+
+## 3rd Party Software
+In this eddition of the Image management deployment I chose chocolatey as the package manager. This allows us to install and manage software packages in a consistent manner across our Citrix Master Image. 
+The Packer template includes a provisioner that installs Chocolatey and uses it to install the necessary software packages.
+
+I build a packages.config file that contains the list of software packages we want to install and the specific version to install. This file is used by Chocolatey to install the packages during the image build process.
+
+```
+<?xml version="1.0" encoding="utf-8"?>
+    <packages>
+      <package id="googlechrome" version="137.0.7151.69" />
+      <package id="vscode" version="1.100.3" packageParameters="/NoDesktopIcon" />
+      <package id="visualstudiocode-disableautoupdate" version="1.0.0.20180620" />
+      <package id="7zip.install" version="24.9.0"/>
+    </packages>
+```
+You can read more on how to setuo your config file on the chocolatey website [here](https://docs.chocolatey.org/en-us/choco/commands/install/#packagesconfig).
+
+## Packer Template
+In this section, I will share the Packer template we use to build our Citrix Master Image. This template is designed to work with Azure and includes the necessary configurations for creating a Windows-based image suitable for Citrix environments.
+```
+{
+    "builders": [{
+        "type": "azure-arm",
+
+        "client_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        "client_secret": "---------------------------------------",
+        "tenant_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        "subscription_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+
+        "managed_image_resource_group_name": "nnautomation",
+        "managed_image_name": "CitrixMasterImage_{{isotime | clean_resource_name}}",
+        "os_type": "Windows",
+        "image_publisher": "MicrosoftWindowsDesktop",
+        "image_offer": "Windows-10",
+        "image_sku": "win10-22h2-avd-g2",
+
+        "communicator": "winrm",
+        "winrm_use_ssl": true,
+        "winrm_insecure": true,
+        "winrm_timeout": "5m",
+        "winrm_username": "packer",
+
+        "azure_tags": {
+            "Creation": "{{isotime | clean_resource_name}}",
+            "Software": "ba8b4b95-70b2-4509-bab6-e4f3ae746fa7",
+            "InitiatedBy": "SBJR"
+        },
+
+        "build_resource_group_name": "CitrixAutomation-Builder",
+        "vm_size": "Standard_D2ads_v6",
+
+        "license_type": "Windows_Client",
+
+        "shared_image_gallery_destination": {
+            "subscription": "ca6495c3-6c00-4fa8-a5a6-665804dfadc5",
+            "resource_group": "CitrixAutomation",
+            "gallery_name": "CitrixMasterImageGallery",
+            "image_name": "CitrixMasterImage",
+            "image_version": "1.0.0",
+            "replication_regions": [
+              "westeurope",
+              "northeurope"
+            ]
+          }
+
+    }],
+    "provisioners": [{
+        "type": "powershell",
+        "inline": [
+            "Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))",
+            "Invoke-WebRequest https://urlToChoco -OutFile packages.config",
+            "choco feature enable -n allowGlobalConfirmation",
+            "choco install packages.config",
+            "while ((Get-Service RdAgent).Status -ne 'Running') { Start-Sleep -s 5 }",
+            "while ((Get-Service WindowsAzureGuestAgent).Status -ne 'Running') { Start-Sleep -s 5 }",
+            "& $env:SystemRoot\\System32\\Sysprep\\Sysprep.exe /oobe /generalize /quiet /quit",
+            "while($true) { $imageState = Get-ItemProperty HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Setup\\State | Select ImageState; if($imageState.ImageState -ne 'IMAGE_STATE_GENERALIZE_RESEAL_TO_OOBE') { Write-Output $imageState.ImageState; Start-Sleep -s 10  } else { break } }"
+        ]
+    }]
+}
+```
+
+Now its just a matter of running the Packer template with the following command:
+```
+packer build .\CloudDesktopA.json
+```
+And waiting for the image to be built. This process can take some time depending on the size of the image and the number of software packages being installed.
