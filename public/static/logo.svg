@@ -1,16 +1,15 @@
-<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g clip-path="url(#clip0_271_118)">
-<rect width="512" height="74" fill="#CCCCCC"/>
-<rect y="146" width="512" height="74" fill="#CCCCCC"/>
-<rect y="292" width="512" height="74" fill="#CCCCCC"/>
-<rect y="438" width="512" height="74" fill="#CCCCCC"/>
-<rect y="74" width="72" height="72" fill="#CCCCCC"/>
-<rect y="366" width="72" height="72" fill="#CCCCCC"/>
-<rect x="440" y="220" width="72" height="72" fill="#CCCCCC"/>
+<svg width="134" height="123" viewBox="0 0 134 123" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M77.7813 99.2656H57.7552L60.2656 85.1875H75.2813L77.7813 99.2656Z" stroke="white" stroke-width="5" stroke-miterlimit="1" stroke-linecap="round"/>
+<path d="M49.5104 99.2656H84.849" stroke="white" stroke-width="5" stroke-miterlimit="1" stroke-linecap="round"/>
+<mask id="mask0_401_146" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="26" y="23" width="83" height="66">
+<path d="M26 23.5312H108.667V88.3333H26V23.5312Z" fill="white"/>
+</mask>
+<g mask="url(#mask0_401_146)">
+<path d="M94.8594 24.1719C100.38 24.1719 104.87 24.1719 104.87 24.1719V85.1875C104.87 85.1875 100.38 85.1875 94.8594 85.1875H39.5677C34.0469 85.1875 29.4844 85.1875 29.4844 85.1875V24.1719C29.4844 24.1719 34.0469 24.1719 39.5729 24.1719H94.8594Z" stroke="white" stroke-width="5" stroke-miterlimit="1" stroke-linecap="round"/>
 </g>
-<defs>
-<clipPath id="clip0_271_118">
-<rect width="512" height="512" fill="white"/>
-</clipPath>
-</defs>
+<path d="M29.4844 59.375L42.7344 46.2448C43.7656 45.2188 45.3125 45.2188 46.3437 46.2448H46.3385L52.75 52.625C53.7812 53.6511 55.3281 53.6511 56.3542 52.625L69.5365 39.4271" stroke="white" stroke-width="5" stroke-miterlimit="1" stroke-linecap="round"/>
+<path d="M29.4844 74.625H104.87" stroke="white" stroke-width="5" stroke-miterlimit="1" stroke-linecap="round"/>
+<path d="M75.4219 54.6823V61.7187" stroke="white" stroke-width="5" stroke-miterlimit="1" stroke-linecap="round"/>
+<path d="M95.4479 54.6823V61.7187" stroke="white" stroke-width="5" stroke-miterlimit="1" stroke-linecap="round"/>
+<path d="M84.849 47.6406V61.7188" stroke="white" stroke-width="5" stroke-miterlimit="1" stroke-linecap="round"/>
 </svg>
