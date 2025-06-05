@@ -1,25 +1,32 @@
 ---
 title: 'Image Management'
-description: 'How we move away from Microsoft MDT and started useing Packer'
+description: 'How we move away from manual images and started useing Packer'
 date: 2025-06-18
-tags: ['Citrix', 'Conference', 'EntraID']
+tags: ['Citrix', 'ImageManagement', 'Packer', 'Azure']
 image: './packer.png'
 authors: ['sbjerre']
-draft: true
+draft: false
 ---
 
-## Table of Contents
-- [Introduction](#introduction)
-- [Packer Template](#packer-template)
+# The motivation behind the project
+
+For years, I managed Windows images by hand—painstaking, repetitive, and error-prone. I knew there had to be a better way, but the leap to automation always seemed just out of reach. In this post, I’ll take you through my journey from manual image management to a streamlined, automated solution using Packer and Azure. If you’ve ever felt stuck in the same rut, this guide will show you how to break free and build a modern, maintainable workflow.
+
+**And just because I use Azure in this example, it doesn’t mean you can’t use Packer with other cloud providers or on-premise. It's just cheap and easy**
 
 ## Prerequisites
-- A Azure subscription with the necessary permissions to create resources.
-- Packer installed on your local machine or a build server.
-- Basic knowledge of Azure.
-- Familiarity with PowerShell scripting.
 
+Before we dive in, let’s make sure you’re set up for success. You’ll need:
 
-## Service Principal
+- An Azure subscription with permissions to create resources.
+- Packer installed locally or on a build server.
+- Basic Azure knowledge.
+- Some PowerShell scripting familiarity.
+
+If you’re ready to leave manual processes behind, let’s get started.
+
+## Introduction
+### Azure: Service Principal
 We need to setup a Service Principal in Azure to allow Packer to authenticate and create resources in our Azure subscription. This is done using the Azure CLI. The Service Principal will have the necessary permissions to create and manage resources in the specified resource group.
 But for this example it will have Contributor permissions on the entire subscription. 
 
@@ -39,11 +46,31 @@ It will generate the following Output
 ```
 Remember the password (Client Secret) & appId as it will not be shown again.
 
-## 3rd Party Software
-In this eddition of the Image management deployment I chose chocolatey as the package manager. This allows us to install and manage software packages in a consistent manner across our Citrix Master Image. 
-The Packer template includes a provisioner that installs Chocolatey and uses it to install the necessary software packages.
+### Azure: Resource group
+idealy we setup two resource groups in Azure, one for  build and one for the final images. 
+This allows us to keep all the build related resources in one place where we can safely delete it when dont want to keep the build artifacts around and not loose our images.
+```
+az group create --name CitrixAutomation --location westeurope
+az group create --name CitrixAutomation-Builder --location westeurope
+```
+To block automation from deleting the resource group with the images, we can create a lock on the resource group. This will prevent any accidental deletion of the resource group and its resources.
+```
+az lock create --name LockRGDelete --lock-type CanNotDelete --resource-group CitrixAutomation
+```
 
-I build a packages.config file that contains the list of software packages we want to install and the specific version to install. This file is used by Chocolatey to install the packages during the image build process.
+### 3rd Party Software
+#### SOFT2go
+In my professional life, I use [SOFT2Go](https://www.danofficeit.com) as the package management solution. \
+This is developed in-house by Danoffice IT and is the most powerful package-tool I have come accross. \
+
+
+#### Chocolatey
+
+
+I decided to use [Chocolatey](https://chocolatey.org/) as the package management solution for this project. Chocolatey is a free and open-source package manager for Windows that allows you to install, update, and manage software packages easily. It has a large repository of software packages and is widely used in the Windows community.
+Chocolatey allows you to create a `packages.config` file that contains the list of software packages you want to install, along with their specific versions. This file is used by Chocolatey to install the packages during the image build process.
+
+The file is basicly an XML file that contains the list of packages you want to install. Here is an example of a `packages.config` file that includes some common software packages:
 
 ```
 <?xml version="1.0" encoding="utf-8"?>
@@ -56,7 +83,8 @@ I build a packages.config file that contains the list of software packages we wa
 ```
 You can read more on how to setuo your config file on the chocolatey website [here](https://docs.chocolatey.org/en-us/choco/commands/install/#packagesconfig).
 
-## Packer Template
+## How-to
+### Packer Template
 In this section, I will share the Packer template we use to build our Citrix Master Image. This template is designed to work with Azure and includes the necessary configurations for creating a Windows-based image suitable for Citrix environments.
 ```
 {
