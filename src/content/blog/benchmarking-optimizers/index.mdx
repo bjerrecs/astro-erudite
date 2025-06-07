@@ -5,10 +5,23 @@ date: 2025-8-01
 tags: []
 image: './osopt.png'
 authors: ['sbjerre']
-draft: true
+draft: false
 ---
 
 I have always been wondering what the difference is between the various VDI optimizers, so I decided to do a little benchmarking of the three most popular ones: VODT, Citrix Optimizer, and VMware OS Optimization Tool.
 I used the same Windows 11 image for all three optimizers, and I ran the optimizers with their default settings. The results were quite interesting, and I will share them here.
 I use Azure as the hosting platform, there might be a slight difference in the results due to it been on a hyperscaler but I think it is still a good comparison.
 
+## Contestants
+
+| Name | Version | Download |
+| --- | --- | --- |
+| VODT | Commit 2ea71c7 | [Download](https://github.com/The-Virtual-Desktop-Team/Virtual-Desktop-Optimization-Tool) |
+| Citrix Optimizer | 1.0.0 | [Download](https://www.citrix.com/downloads/citrix-tools/citrixtoolspage/CitrixOptimizerTool.html) * |
+| Windows OS Optimization Tool for Omnissa Horizon | 14374004267 | [Download](https://customerconnect.omnissa.com/downloads/details?downloadGroup=CART_OSOT_1_2_HZN_2503&productId=1604&rPId=118992) |
+
+*Citrix Optimizer is the only tool behind a login wall, you need to have a active partner account to download it.*
+
+## The test setup
+
+## How I benchmark

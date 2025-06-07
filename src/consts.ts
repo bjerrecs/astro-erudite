@@ -1,10 +1,10 @@
 import type { IconMap, SocialLink, Site } from '@/types'
 
 export const SITE: Site = {
-  title: 'Desktop as a Service',
+  title: 'The EUC Arcitect',
   description:
     'A blog where I share my thoughts on technology, guides, and and other usefull information.',
-  href: 'daas.dk',
+  href: 'eucarcitect.dk',
   author: 'sbjerre',
   locale: 'en-US',
   featuredPostCount: 3,
