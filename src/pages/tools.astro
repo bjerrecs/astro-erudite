@@ -1,0 +1,21 @@
+---
+import Breadcrumbs from '@/components/Breadcrumbs.astro'
+import Link from '@/components/Link.astro'
+import PageHead from '@/components/PageHead.astro'
+import { buttonVariants } from '@/components/ui/button'
+import Layout from '@/layouts/Layout.astro'
+import { cn } from '@/lib/utils'
+---
+
+<Layout>
+  <PageHead slot="Tools" title="404" />
+  <Breadcrumbs items={[{ label: 'Tools', icon: 'lucide:hammer' }]} />
+    <ul>
+        <li>
+            <Link href="/tools/ChocoPackageConfig" class={cn(buttonVariants({ variant: 'outline' }), 'flex gap-x-1.5 group')}>
+            Chocolaty Config Generator
+            <span class="transition-transform group-hover:-translate-x-1">&rarr;</span> 
+            </Link>
+        </li>
+    </ul>
+</Layout>
