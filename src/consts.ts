@@ -1,10 +1,10 @@
 import type { IconMap, SocialLink, Site } from '@/types'
 
 export const SITE: Site = {
-  title: 'The EUC Arcitect',
+  title: 'The EUC Architect',
   description:
     'A blog where I share my thoughts on technology, guides, and and other usefull information.',
-  href: 'eucarcitect.dk',
+  href: 'EUCArchitect.dk',
   author: 'sbjerre',
   locale: 'en-US',
   featuredPostCount: 3,
