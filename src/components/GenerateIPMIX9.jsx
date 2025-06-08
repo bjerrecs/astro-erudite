@@ -32,7 +32,7 @@ export default function GenerateIPMIX9() {
   };
 
   return (
-    <div className="max-w-md mx-auto p-4">
+    <div className="max-w-md mx-auto p-4 w-full">
       <Card className="rounded-2xl shadow-md p-4">
         <CardContent className="space-y-4">
           <div>
