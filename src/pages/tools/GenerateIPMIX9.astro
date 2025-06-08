@@ -2,11 +2,11 @@
 import Breadcrumbs from '@/components/Breadcrumbs.astro'
 import PageHead from '@/components/PageHead.astro'
 import Layout from '@/layouts/Layout.astro'
-import ChocoPackageForm from "@/components/ChocoConfig"
+import GenerateIPMIX9Component from "@/components/GenerateIPMIX9"
 ---
 
 <Layout>
   <PageHead slot="head" title="Chocolaty Config Generator" />
   <Breadcrumbs items={[{ label: 'Tools' },{ label: 'Chocolaty Config Generator', icon: 'lucide:info' }]} />
-    <ChocoPackageForm client:load/>
+    <GenerateIPMIX9Component client:load/>
 </Layout>
