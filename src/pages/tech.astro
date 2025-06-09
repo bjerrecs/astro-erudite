@@ -1,0 +1,42 @@
+---
+import BlogCard from '@/components/BlogCard.astro'
+import Link from '@/components/Link.astro'
+import PageHead from '@/components/PageHead.astro'
+import { buttonVariants } from '@/components/ui/button'
+import { SITE } from '@/consts'
+import Layout from '@/layouts/Layout.astro'
+import { getRecentPosts } from '@/lib/data-utils'
+
+const blog = await getRecentPosts(SITE.featuredPostCount)
+---
+
+<Layout>
+  <PageHead slot="head" title="Home" />
+  <section class="w-full h-full grid grid-cols-5 grid-rows-5 gap-4">
+    <div class="w-32 h-32 flex items-center justify-center  bg-purple-500">
+      
+    </div>
+    <div class="w-32 h-32 flex items-center justify-center bg-purple-500">
+      
+    </div>
+    <div class="w-32 h-32 flex items-center justify-center bg-purple-500">
+      
+    </div>
+    <div class="w-32 h-32 flex items-center justify-center bg-purple-500">
+      
+    </div>
+    <div class="w-32 h-32 flex items-center justify-center bg-purple-500">
+      
+    </div>
+    <div class="w-32 h-32 flex items-center justify-center bg-purple-500">
+      
+    </div>
+    <div class="w-32 h-32 flex items-center justify-center bg-purple-500">
+      
+    </div>
+    <div class="w-32 h-32 flex items-center justify-center bg-purple-500">
+      
+    </div>
+
+  </section>
+</Layout>
