@@ -1,0 +1,12 @@
+---
+import Breadcrumbs from '@/components/Breadcrumbs.astro'
+import PageHead from '@/components/PageHead.astro'
+import Layout from '@/layouts/Layout.astro'
+import GenerateIPMIX9Component from "@/components/GenerateIPMIX9"
+---
+
+<Layout>
+  <PageHead slot="head" title="Image Automation - Build File Form" />
+  <Breadcrumbs items={[{ label: 'Tools' },{ label: 'Image Build File Form', icon: 'lucide:info' }]} />
+    <GenerateIPMIX9Component client:load/>
+</Layout>
