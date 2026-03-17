@@ -1,0 +1,184 @@
+---
+title: "When Compliance Meets Reality: A XenServer Upgrade That Broke Storage (and How We Fixed It)"
+date: "2026-03-18"
+description: "A minor XenServer 8.2 to 8.2.1 compliance upgrade triggered a full-stack storage inconsistency, cascading into failed VM migrations and a production outage. Here's how we traced it to a stale device-mapper entry and fixed it."
+tags: ["xenserver", "storage", "troubleshooting", "infrastructure", "devops"]
+image: './picture.jpg'
+authors: ['sbjerre']
+draft: false
+---
+## The Context: LAS Compliance Driving Platform Upgrades
+ 
+A customer needed to upgrade their XenServer environment from 8.2 to 8.4 to meet LAS compliance requirements. On paper, this was a minor update—low risk, well understood, and aligned with vendor guidance.
+ 
+**The expectation:** A routine upgrade with minimal disruption.
+ 
+**The outcome:** A full-stack storage inconsistency that cascaded into failed VM migrations and a production workload going dark.
+ 
+## The First Signs: Storage Behaving Strangely
+ 
+Immediately after the upgrade, XenCenter started showing unusual behavior:
+ 
+- Multiple instances of Local Storage
+- Duplicate DVD drives
+- Removable storage appearing inconsistently
+- Some SRs marked with `host: <not in database>`
+- No attached PBDs
+ 
+At this point, the system wasn't broken—it was internally inconsistent. Think of it like a map showing multiple copies of the same building, some accessible, some not.
+ 
+## Under the Hood: What Was Actually Broken
+ 
+Xen's storage model relies on a chain of components:
+ 
+```
+Hardware → Kernel → udev → xapi → SR → PBD
+```
+ 
+After the upgrade:
+ 
+- `udev` rediscovered devices
+- `xapi` created new SR entries
+- ...but old SR entries were **not** cleaned up
+- ...and PBD (host attachment) links were missing or broken
+ 
+The result: valid storage existed, but Xen didn't consistently know which host owned it.
+ 
+## First Fix: Cleaning Up the Storage Layer
+ 
+We focused on restoring consistency:
+ 
+1. Identified valid SRs (those with attached PBDs)
+2. Removed orphaned SRs:
+ 
+```bash
+xe sr-forget uuid=<UUID>
+```
+ 
+3. Restarted the toolstack
+4. Triggered udev rediscovery
+ 
+After this, duplicate SRs disappeared and the storage layout normalized. The system looked healthy again — at least on the surface.
+ 
+## The Real Problem Emerges: Migration Failure
+ 
+When attempting to migrate a VM (S-Domino), the process failed with:
+ 
+```
+SR_BACKEND_FAILURE_46
+The VDI is not available
+lvchange -ay ... failed: Device or resource busy
+```
+ 
+At the same time, the VM:
+ 
+- Appeared running or paused
+- Had no console
+- Did not respond to RDP or ping
+ 
+This is a classic symptom of a VM caught mid-operation — alive in the control plane, dead in reality.
+ 
+## Second Layer: VM State Recovery
+ 
+We attempted to recover the VM:
+ 
+1. Forced power state reset:
+ 
+```bash
+xe vm-reset-powerstate --force
+```
+ 
+2. Destroyed the domain via `xl`
+3. Restarted the VM
+ 
+But the same storage error persisted. So the problem wasn't the VM — it was the disk.
+ 
+## Third Layer: VDI Investigation
+ 
+We traced the issue to a specific VDI:
+ 
+- No active processes (`lsof`, `fuser`)
+- Not attached (`tap-ctl list`)
+- Not marked in Xen (`resetvdis.py` confirmed)
+ 
+Everything said: *"This disk is free."*
+ 
+But LVM said: *"Device or resource busy."*
+ 
+That contradiction is where things got interesting.
+ 
+## The Breakthrough: Device-Mapper Tells the Truth
+ 
+Running:
+ 
+```bash
+dmsetup info -c
+```
+ 
+revealed something subtle but critical: the VDI had an existing device-mapper entry showing:
+ 
+- `Open = 0` (not in use)
+- ...but still **present in the kernel**
+ 
+So the disk was not attached, not active, not used — but still registered in device-mapper. That was enough for LVM to refuse activation.
+ 
+## Root Cause: A Stale Device-Mapper Entry
+ 
+The failed migration had left behind a stale device-mapper mapping for the VDI. This created a paradox:
+ 
+| Layer | State |
+|---|---|
+| Xen | Disk is free |
+| LVM | Appears free |
+| device-mapper | Still registered (root cause) |
+ 
+Higher layers believed the disk was free. The kernel still held a mapping. Activation failed with "device busy."
+ 
+This is a classic **cross-layer state inconsistency**.
+ 
+## The Fix: Removing the Ghost
+ 
+Once identified, the resolution was straightforward:
+ 
+```bash
+dmsetup remove -f <mapper-name>
+```
+ 
+After removing the stale entry:
+ 
+- LVM activation succeeded
+- Xen could access the VDI
+- The VM started normally
+ 
+No data loss. No rebuild. Just alignment restored.
+ 
+## Final Outcome
+ 
+After cleanup:
+ 
+- Storage repositories were consistent
+- No duplicate or orphan SRs remained
+- VDI activation worked correctly
+- The affected VM was fully operational
+- Migration functionality restored
+ 
+## What This Case Teaches
+ 
+This wasn't a hardware failure. It wasn't even a typical upgrade issue. It was a state desynchronization across layers:
+ 
+```
+xapi         → consistent
+udev         → consistent
+LVM          → appears consistent
+device-mapper → inconsistent ← root cause
+```
+ 
+The system didn't fail — it **disagreed with itself**. And in distributed systems, disagreement is the most dangerous failure mode of all.
+ 
+## Closing Thought
+ 
+Compliance-driven upgrades are often treated as routine. But even minor version changes can expose fragile assumptions between system layers.
+ 
+In this case, resolving the issue required going beyond the UI, beyond Xen, and into the kernel's view of reality.
+ 
+That's where the truth usually hides.
